@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-import google.generativeai as genai
+from google import genai # Yeni kütüphane
 from supabase import create_client, Client
 import random
 import os
