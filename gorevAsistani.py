@@ -3,24 +3,23 @@ import streamlit as st
 import google.generativeai as genai
 from supabase import create_client, Client
 import random
-import os
 
-# --- 1. BAĞLANTI AYARLARI (Buraları Doldurun) ---
+# --- 1. AYARLAR ---
+# Streamlit Cloud -> Manage App -> Settings -> Secrets kısmında tanımladığından emin ol
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-# Stabil kütüphane için yapay zeka yapılandırması
+# Yapılandırma
 genai.configure(api_key=GEMINI_API_KEY)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- TARAYICI AYARLARI ---
-st.set_page_config(page_title="Kodlama Macerasi", page_icon="🎮", layout="wide")
+st.set_page_config(page_title="Kodlama Macerası", page_icon="🎮", layout="wide")
 
-# Tepe Boşluğunu Sıfırlayan CSS
-st.markdown("<style>.block-container {padding-top: 1rem !important; padding-bottom: 0rem !important;}</style>", unsafe_allow_html=True)
+# CSS: Tepe Boşluğunu Sıfırla
+st.markdown("<style>.block-container {padding-top: 1rem !important;}</style>", unsafe_allow_html=True)
 
-# --- GİRİŞ / OTURUM YÖNETİMİ ---
+# --- 2. OTURUM YÖNETİMİ ---
 if "ogrenci_adi" not in st.session_state:
     st.session_state.ogrenci_adi = None
 if "xp" not in st.session_state:
@@ -28,196 +27,118 @@ if "xp" not in st.session_state:
 if "rozetler" not in st.session_state:
     st.session_state.rozetler = []
 
-# --- EKRAN 1: GİRİŞ EKRANI (Eğer Giriş Yapılmadıysa) ---
+# --- 3. GİRİŞ EKRANI ---
 if st.session_state.ogrenci_adi is None:
     st.title("🎮 KODLAMA MACERASI: AKADEMİ")
     st.subheader("Maceraya Katılmak İçin Kullanıcı Adını Yaz!")
     
-    girilen_ad = st.text_input("Kullanıcı Adı (Örn: Ahmet_06, Selin_Kodcu):", max_chars=20).strip()
+    girilen_ad = st.text_input("Kullanıcı Adı (Örn: Ahmet_06):", max_chars=20).strip()
     
     if st.button("🚀 Giriş Yap / Kaydol"):
         if girilen_ad:
             try:
-                # Veritabanında bu öğrenci var mı kontrol et
                 veri = supabase.table("ogrenciler").select("*").eq("isim", girilen_ad).execute()
-                
                 if len(veri.data) > 0:
-                    # Öğrenci zaten var, verilerini buluttan çek
                     st.session_state.ogrenci_adi = veri.data[0]["isim"]
                     st.session_state.xp = veri.data[0]["xp"]
                     st.session_state.rozetler = veri.data[0]["rozetler"]
-                    st.success("Tekrar hoş geldin, " + girilen_ad + "! Kaldığın yerden devam ediyorsun.")
+                    st.success(f"Tekrar hoş geldin, {girilen_ad}!")
                 else:
-                    # Yeni öğrenci, veritabanına kaydet
                     yeni_veri = {"isim": girilen_ad, "xp": 0, "rozetler": []}
                     supabase.table("ogrenciler").insert(yeni_veri).execute()
                     st.session_state.ogrenci_adi = girilen_ad
                     st.session_state.xp = 0
                     st.session_state.rozetler = []
-                    st.success("Profilin başarıyla oluşturuldu, " + girilen_ad + "! Macera başlıyor.")
-                
+                    st.success(f"Profilin oluşturuldu, {girilen_ad}! Macera başlıyor.")
                 st.rerun()
             except Exception as e:
-                st.error("Veritabanı bağlantı hatası: " + str(e))
+                st.error(f"Veritabanı hatası: {e}")
         else:
-            st.warning("Lütfen geçerli bir kullanıcı adı girin.")
-            
-    st.stop() # Giriş yapana kadar aşağıdaki ana sayfa kodlarını çalıştırma
+            st.warning("Lütfen kullanıcı adı girin.")
+    st.stop()
 
-# --- EKRAN 2: ANA UYGULAMA (Giriş Yapıldıysa Çalışacak) ---
+# --- 4. ANA UYGULAMA ---
 st.title("🎮 KODLAMA MACERASI: AKADEMİ")
-st.write("Hoş geldin, **" + st.session_state.ogrenci_adi + "**! Kodları çöz, puanları topla, rakiplerini anlık geç!")
-st.write("---")
+st.write(f"Hoş geldin, **{st.session_state.ogrenci_adi}**!")
 
-# Üç Sütunlu Canlı Düzen
-sol_kolon, bosluk_kolonu, sag_kolon = st.columns([5, 1, 3])
+sol_kolon, bosluk, sag_kolon = st.columns([5, 1, 3])
 
 with sol_kolon:
-    # --- AVATAR / REHBER SEÇİMİ ---
     st.subheader("🤖 Dijital Rehberini Seç")
-    avatar = st.selectbox(
-        "Sana hangi yapay zeka karakteri rehberlik etsin?",
-        ["Siber Kedi Pixel (Eğlenceli)", "Kerem Usta (Deneyimli)"]
-    )
+    avatar = st.selectbox("Sana kim rehberlik etsin?", ["Siber Kedi Pixel", "Kerem Usta"])
+    avatar_isim = "Siber Kedi Pixel" if "Pixel" in avatar else "Kerem Usta"
+    avatar_tarz = "Neşeli, ipucu veren" if "Pixel" in avatar else "Tecrübeli, usta-çırak dili"
 
-    if "Pixel" in avatar:
-        avatar_isim = "Siber Kedi Pixel"
-        avatar_tarz = "Konusurken neseli ol, arada miyav de. Ogrenciye minik patilerinle ipuclari birak."
-    else:
-        avatar_isim = "Kerem Usta"
-        avatar_tarz = "Eski bir bas muhendis gibi konus. Tatli-sert ol, usta cirak dili kullan."
-
-    st.divider()
-
-    # Sekmeler
     sekme1, sekme2 = st.tabs(["🚀 Görev Al", "🔍 Kodunu Denetlet"])
 
     with sekme1:
-        st.subheader("🎯 Yeni Bir Görev Keşfet")
-        yas_grubu = st.selectbox(
-            "Seviyeniz:",
-            ["Ilkokul (Scratch)", "Ortaokul (Temel Python)", "Lise (Ileri Python)"]
-        )
-        ilgi_alani = st.text_input("İlgi alanın ne? (Örn: Uzay, Futbol):", placeholder="Yazın...")
-
+        yas = st.selectbox("Seviyeniz:", ["İlkokul", "Ortaokul", "Lise"])
+        ilgi = st.text_input("İlgi alanın:")
         if st.button("🎲 Görevi Başlat"):
-            if ilgi_alani:
-                with st.spinner("Lütfen bekleyin..."):
+            if ilgi:
+                with st.spinner("Görev hazırlanıyor..."):
                     try:
-                        talimat = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". " + yas_grubu + " seviyesindeki bir ogrenci icin '" + ilgi_alani + "' ile ilgili hikayeli bir kodlama gorevi yaz. Cevabini GÖREV SENARYOSU, YAPILMASI GEREKENLER and REHBER İPUCU basliklariyla KESINLIKLE TURKCE olarak ver."
+                        talimat = f"Sen {avatar_isim}'sin. Karakterin: {avatar_tarz}. {yas} seviyesindeki bir öğrenciye {ilgi} ile ilgili kodlama görevi yaz."
                         model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(kontrol_talimati)
-                        sonuc_metni = response.text
+                        response = model.generate_content(talimat)
                         st.success("🎯 Görev Haritası Yüklendi!")
                         st.write(response.text)
                     except Exception as e:
-                        st.error("Yapay zeka hatası: " + str(e))
-            else:
-                st.warning("Lütfen önce ilgi alanınızı yazın.")
+                        st.error(f"Yapay zeka hatası: {e}")
 
     with sekme2:
         st.subheader("💻 Hacker Terminali")
-        kod_dili = st.radio("Kodlama Dili:", ["Python", "Scratch"], horizontal=True)
-        
-        ogrenci_kodu = st.text_area(
-            "Kodlarını Buraya Yaz / Yapıştır:", 
-            height=200, 
-            placeholder="Kodları buraya ekleyin..."
-        )
+        kod_dili = st.radio("Dil:", ["Python", "Scratch"], horizontal=True)
+        ogrenci_kodu = st.text_area("Kodlarını Buraya Yaz:", height=200)
         
         if st.button("⚡ Kodumu Test Et"):
             if ogrenci_kodu:
                 with st.spinner("Analiz ediliyor..."):
-                     kontrol_talimati = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". Ogrenci sana sunu gonderdi: " + kod_dili + ". Kod: " + ogrenci_kodu + ". Eger kod dogruysa cevaba KESINLIKLE 'BAŞARILI' kelimesiyle basla. Hata varsa Sokratik yontemle sorular sorarak TURKCE yardim et, kodu direkt verme."
-                     sonuc_metni=""
-                     try:
-                       
+                    try:
+                        kontrol = f"Sen {avatar_isim}'sin. Öğrenci {kod_dili} dilinde şu kodu yazdı: {ogrenci_kodu}. Kod doğruysa 'BAŞARILI' ile başla, değilse düzeltme yap."
                         model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(kontrol_talimati)
-                        sonuc_metni = response.text
+                        response = model.generate_content(kontrol)
+                        sonuc = response.text
                         
-                        st.info("📝 " + avatar_isim + " Geri Bildirimi:")
-                        st.write(sonuc_metni)
+                        st.info(f"📝 {avatar_isim} Geri Bildirimi:")
+                        st.write(sonuc)
                         
-                        # Skor Değişimi Hesaplama
-                        puan_degisimi = 5
-                        rozet_ekle = None
-                        
-                        if "BAŞARILI" in sonuc_metni.upper() or "TEBRİK" in sonuc_metni.upper():
-                            st.balloons() 
-                            puan_degisimi = random.randint(30, 50)
-                            st.success("🎉 GÖREV BAŞARILI! " + str(puan_degisimi) + " XP Kazandın!")
-                            
-                            if "🏅 Hata_Avcısı" not in st.session_state.rozetler:
-                                rozet_ekle = "🏅 Hata_Avcısı"
-                            elif "🏅 Kod_Ustası" not in st.session_state.rozetler:
-                                rozet_ekle = "🏅 Kod_Ustası"
+                        puan = 5
+                        rozet = None
+                        if "BAŞARILI" in sonuc.upper():
+                            st.balloons()
+                            puan = random.randint(30, 50)
+                            st.success(f"🎉 GÖREV BAŞARILI! {puan} XP Kazandın!")
+                            if "🏅 Hata_Avcısı" not in st.session_state.rozetler: rozet = "🏅 Hata_Avcısı"
                         else:
-                            st.warning("⚡ Kod üzerinde biraz daha çalışmalısın! Deneme Bonusu: +5 XP Kazandın.")
+                            st.warning("⚡ Biraz daha çalışmalısın! +5 XP.")
+
+                        # Güncelleme
+                        yeni_xp = st.session_state.xp + puan
+                        data = {"xp": yeni_xp}
+                        if rozet:
+                            st.session_state.rozetler.append(rozet)
+                            data["rozetler"] = st.session_state.rozetler
                         
-                        # --- BULUT VERİTABANINI GÜNCELLEME ---
-                        yeni_toplam_xp = st.session_state.xp + puan_degisimi
-                        guncelleme_verisi = {"xp": yeni_toplam_xp}
-                        
-                        if rozet_ekle and rozet_ekle not in st.session_state.rozetler:
-                            st.session_state.rozetler.append(rozet_ekle)
-                            st.toast("Yeni Rozet Açıldı: " + rozet_ekle + "!", icon="🏆")
-                            guncelleme_verisi["rozetler"] = st.session_state.rozetler
-                            
-                        # Supabase Güncelleme Sorgusu
-                        supabase.table("ogrenciler").update(guncelleme_verisi).eq("isim", st.session_state.ogrenci_adi).execute()
-                        
-                        # Yerel Hafızayı Güncelle ve Sayfayı Yenile
-                        st.session_state.xp = yeni_toplam_xp
+                        supabase.table("ogrenciler").update(data).eq("isim", st.session_state.ogrenci_adi).execute()
+                        st.session_state.xp = yeni_xp
                         st.rerun()
-                        
                     except Exception as e:
-                        st.error("İşlem gerçekleştirilemedi: " + str(e))
+                        st.error(f"İşlem yapılamadı: {e}")
             else:
-                st.warning("Denetlemek için önce kod kutusuna bir şeyler yazmalısın.")
+                st.warning("Kod kutusuna bir şey yazmalısın.")
 
-# --- ORTADAKİ BOŞ SÜTUN ---
-with bosluk_kolonu:
-    st.write("")
-
-# --- EN SAĞDAKİ SÜTUN (Eşzamanlı Canlı Skor Paneli) ---
 with sag_kolon:
     st.subheader("📊 Senin Durumun")
-    
-    skor_1, skor_2 = st.columns(2)
-    with skor_1:
-        st.metric(label="⚡ Puanın", value=str(st.session_state.xp) + " XP")
-    with skor_2:
-        seviye = (st.session_state.xp // 100) + 1
-        st.metric(label="🛡️ Seviyen", value="Seviye " + str(seviye))
-        
+    st.metric("⚡ Puanın", f"{st.session_state.xp} XP")
     if st.session_state.rozetler:
-        st.write("🏅 **Rozetlerin:** " + " ".join(st.session_state.rozetler))
-        
+        st.write("🏅 **Rozetler:** " + " ".join(st.session_state.rozetler))
+    
     st.write("---")
-    
-    st.subheader("🏆 Canlı Liderlik Tablosu")
-    st.write("Sınıf İçi Eşzamanlı Sıralama:")
-    
+    st.subheader("🏆 Liderlik Tablosu")
     try:
-        # BULUTTAN TÜM ÖĞRENCİLERİN ANLIK PUANLARINI ÇEK
         tum_sinif = supabase.table("ogrenciler").select("isim", "xp").order("xp", desc=True).execute()
-        
-        # Veritabanından gelen canlı listeyi ekrana bas
         for sira, ogrenci in enumerate(tum_sinif.data, start=1):
-            if sira == 1: madalya = "🥇"
-            elif sira == 2: madalya = "🥈"
-            elif sira == 3: madalya = "🥉"
-            else: madalya = "👤"
-                
-            kullanici_ismi = ogrenci["isim"]
-            puanı = ogrenci["xp"]
-            
-            # Eğer satırdaki kişi o an ekranı açan öğrenciyse onu vurgula
-            if kullanici_ismi == st.session_state.ogrenci_adi:
-                st.markdown("**" + madalya + " " + str(sira) + ". " + kullanici_ismi + ": " + str(puanı) + " XP** 👈")
-            else:
-                st.write(madalya + " " + str(sira) + ". " + kullanici_ismi + ": " + str(puanı) + " XP")
-                
-    except Exception as e:
-        st.write("Sıralama şu an güncellenemiyor...")
+            st.write(f"{sira}. {ogrenci['isim']}: {ogrenci['xp']} XP")
+    except:
+        st.write("Sıralama yüklenemedi.")
