@@ -6,9 +6,9 @@ import random
 import os
 
 # --- 1. BAĞLANTI AYARLARI (Buraları Doldurun) ---
-SUPABASE_URL = "https://uamohuxikyogmafckatw.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhbW9odXhpa3lvZ21hZmNrYXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTg1OTIsImV4cCI6MjA5NzY5NDU5Mn0.YHZuD-C1SPEBUw7kPvKwjkErwSGTE8dFEc8DXn0EplQ"
-GEMINI_API_KEY = "AQ.Ab8RN6JdxiiSE-fptjMa989DoIV71WhjDxGErFir9owVo7wG-Q"
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 # Eski ama stabil kütüphane için yapay zeka yapılandırması
 genai.configure(api_key=GEMINI_API_KEY)
