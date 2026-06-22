@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-from google import genai # Yeni kütüphane
+import google.generativeai as genai
 from supabase import create_client, Client
 import random
 import os
 
 # --- 1. BAĞLANTI AYARLARI (Buraları Doldurun) ---
-GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+SUPABASE_URL = "https://uamohuxikyogmafckatw.supabase.co/rest/v1/"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVhbW9odXhpa3lvZ21hZmNrYXR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMTg1OTIsImV4cCI6MjA5NzY5NDU5Mn0.YHZuD-C1SPEBUw7kPvKwjkErwSGTE8dFEc8DXn0EplQ"
+GEMINI_API_KEY = "AQ.Ab8RN6JdxiiSE-fptjMa989DoIV71WhjDxGErFir9owVo7wG-Q"
 
 # Eski ama stabil kütüphane için yapay zeka yapılandırması
 genai.configure(api_key=GEMINI_API_KEY)
@@ -106,7 +106,7 @@ with sol_kolon:
                     try:
                         talimat = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". " + yas_grubu + " seviyesindeki bir ogrenci icin '" + ilgi_alani + "' ile ilgili hikayeli bir kodlama gorevi yaz. Cevabini GÖREV SENARYOSU, YAPILMASI GEREKENLER and REHBER İPUCU basliklariyla KESINLIKLE TURKCE olarak ver."
                         model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(talimat)
+                        response = model.generate_content(kontrol_talimati)
                         sonuc_metni = response.text
                         st.success("🎯 Görev Haritası Yüklendi!")
                         st.write(response.text)
@@ -130,8 +130,8 @@ with sol_kolon:
                 with st.spinner("Analiz ediliyor..."):
                     try:
                         kontrol_talimati = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". Ogrenci sana sunu gonderdi: " + kod_dili + ". Kod: " + ogrenci_kodu + ". Eger kod dogruysa cevaba KESINLIKLE 'BAŞARILI' kelimesiyle basla. Hata varsa Sokratik yontemle sorular sorarak TURKCE yardim et, kodu direkt verme."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(kontrol_talimati)
+                        response = client.models.generate_content(model="gemini-1.5-flash", contents=kontrol_talimati)
+                        sonuc_metni = response.text
                         
                         st.info("📝 " + avatar_isim + " Geri Bildirimi:")
                         st.write(sonuc_metni)
