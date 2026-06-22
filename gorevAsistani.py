@@ -79,7 +79,7 @@ with sol_kolon:
                 with st.spinner("Görev hazırlanıyor..."):
                     try:
                         talimat = f"Sen {avatar_isim}'sin. Karakterin: {avatar_tarz}. {yas} seviyesindeki bir öğrenciye {ilgi} ile ilgili kodlama görevi yaz."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-1.5-flash-latest")
                         response = model.generate_content(talimat)
                         st.success("🎯 Görev Haritası Yüklendi!")
                         st.write(response.text)
@@ -96,7 +96,7 @@ with sol_kolon:
                 with st.spinner("Analiz ediliyor..."):
                     try:
                         kontrol = f"Sen {avatar_isim}'sin. Öğrenci {kod_dili} dilinde şu kodu yazdı: {ogrenci_kodu}. Kod doğruysa 'BAŞARILI' ile başla, değilse düzeltme yap."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-1.5-flash-latest")
                         response = model.generate_content(kontrol)
                         sonuc = response.text
                         
