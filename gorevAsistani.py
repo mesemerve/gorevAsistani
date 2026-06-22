@@ -130,7 +130,8 @@ with sol_kolon:
                 with st.spinner("Analiz ediliyor..."):
                     try:
                         kontrol_talimati = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". Ogrenci sana sunu gonderdi: " + kod_dili + ". Kod: " + ogrenci_kodu + ". Eger kod dogruysa cevaba KESINLIKLE 'BAŞARILI' kelimesiyle basla. Hata varsa Sokratik yontemle sorular sorarak TURKCE yardim et, kodu direkt verme."
-                        response = client.models.generate_content(model="gemini-1.5-flash", contents=kontrol_talimati)
+                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        response = model.generate_content(kontrol_talimati)
                         sonuc_metni = response.text
                         
                         st.info("📝 " + avatar_isim + " Geri Bildirimi:")
