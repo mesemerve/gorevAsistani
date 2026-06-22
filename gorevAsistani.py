@@ -106,7 +106,7 @@ with sol_kolon:
                     try:
                         talimat = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". " + yas_grubu + " seviyesindeki bir ogrenci icin '" + ilgi_alani + "' ile ilgili hikayeli bir kodlama gorevi yaz. Cevabini GÖREV SENARYOSU, YAPILMASI GEREKENLER and REHBER İPUCU basliklariyla KESINLIKLE TURKCE olarak ver."
                         model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(kontrol_talimati)
+                        response = model.generate_content(talimat)
                         sonuc_metni = response.text
                         st.success("🎯 Görev Haritası Yüklendi!")
                         st.write(response.text)
