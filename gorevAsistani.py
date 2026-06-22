@@ -128,8 +128,10 @@ with sol_kolon:
         if st.button("⚡ Kodumu Test Et"):
             if ogrenci_kodu:
                 with st.spinner("Analiz ediliyor..."):
-                    try:
-                        kontrol_talimati = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". Ogrenci sana sunu gonderdi: " + kod_dili + ". Kod: " + ogrenci_kodu + ". Eger kod dogruysa cevaba KESINLIKLE 'BAŞARILI' kelimesiyle basla. Hata varsa Sokratik yontemle sorular sorarak TURKCE yardim et, kodu direkt verme."
+                     kontrol_talimati = "Sen bir oyun karakterisin. Ismin: " + avatar_isim + ". Karakter tarzin: " + avatar_tarz + ". Ogrenci sana sunu gonderdi: " + kod_dili + ". Kod: " + ogrenci_kodu + ". Eger kod dogruysa cevaba KESINLIKLE 'BAŞARILI' kelimesiyle basla. Hata varsa Sokratik yontemle sorular sorarak TURKCE yardim et, kodu direkt verme."
+                     sonuc_metni=""
+                     try:
+                       
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(kontrol_talimati)
                         sonuc_metni = response.text
